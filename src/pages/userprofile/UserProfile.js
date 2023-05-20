@@ -1,11 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
 import { auth, db, storage } from "../../firebaseConfig";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
 import Prefectures from "../../components/Prefectures";
 import "daisyui/dist/full.css";
 
-const UserProfile = () => {
+export const UserProfileContext = createContext({
+  setHasUserProfile: () => {},
+});
+
+export default function UserProfile() {
+  const userProfileContext = useContext(UserProfileContext);
+  const { setHasUserProfile } = userProfileContext;
   const [user] = useAuthState(auth);
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,8 +43,8 @@ const UserProfile = () => {
         setHometown(userData.hometown || "");
         setBio(userData.bio || "");
         setRemainingPhotos(userData.remainingPhotos || Array(3).fill(null));
-      // userData.photo1のURLをphoto1Previewにセット
-      setPhoto1Preview(userData.photo1 || null);
+        // userData.photo1のURLをphoto1Previewにセット
+        setPhoto1Preview(userData.photo1 || null);
       }
     };
     fetchUserData();
@@ -100,30 +106,27 @@ const UserProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!user) {
       return;
     }
-  
+
     try {
       let photo1URL = photo1Preview;
       if (photo1 && typeof photo1 !== "string") {
         photo1URL = await uploadImage(user.uid, photo1);
       }
-  
-      const uploadedRemainingPhotos = (
-        await Promise.all(
-          remainingPhotos.map(async (photo, index) => {
-            if (photo && typeof photo !== "string") {
-              const photoURL = await uploadImage(user.uid, photo);
-              return photoURL;
-            } else {
-              return photo;
-            }
-          })
-        )
-      ).filter((photo) => photo !== null);
-  
+      const uploadedRemainingPhotos = await Promise.all(
+        remainingPhotos.map(async (photo, index) => {
+          if (photo && typeof photo !== "string") {
+            const photoURL = await uploadImage(user.uid, photo);
+            return photoURL;
+          } else {
+            return photo;
+          }
+        })
+      ).then((results) => results.filter((photo) => photo !== null));
+
       const userDocRef = db.collection("users").doc(user.uid);
       await userDocRef.set(
         {
@@ -139,8 +142,9 @@ const UserProfile = () => {
         },
         { merge: true }
       );
-  
-      setStep(4);
+      setHasUserProfile(true);
+      navigate("/home");
+      window.location.reload();
     } catch (error) {
       console.error("Error updating user profile:", error);
     }
@@ -152,10 +156,6 @@ const UserProfile = () => {
 
   const handleBack = () => {
     setStep(step - 1);
-  };
-
-  const startApp = () => {
-    navigate("/home");
   };
 
   return (
@@ -418,25 +418,6 @@ const UserProfile = () => {
               </div>
             )}
           </div>
-          <div>
-            {step === 4 && (
-              <>
-                <h2 className="text-center">Registration Complete</h2>
-                <div className="registration-complete">
-                  <p>
-                    You can edit your profile information at any time on your My
-                    Page.
-                  </p>
-                </div>
-                <button
-                  className="btn btn-active btn-accent"
-                  onClick={startApp}
-                >
-                  Start
-                </button>
-              </>
-            )}
-          </div>
           <div className="sticky bottom-0 p-4 flex justify-between">
             {step > 1 && step < 4 ? (
               <button
@@ -475,6 +456,4 @@ const UserProfile = () => {
       </div>
     </div>
   );
-};
-
-export default UserProfile;
+}
