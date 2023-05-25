@@ -21,6 +21,7 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasUserProfile, setHasUserProfile] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isHidden, setIsHidden] = useState(false);
 
   const checkUserProfile = useCallback(async (uid) => {
     const userProfileDoc = await firebase
@@ -49,6 +50,10 @@ export default function App() {
   if (loading) {
     return <div>Loading...</div>; // 認証状態とプロフィールの存在チェックが完了するまでの間にローディング画面を表示
   }
+
+  const handleHideFooter = () => {
+    setIsHidden(true);
+  };
 
   return (
     <Router>
@@ -124,7 +129,9 @@ export default function App() {
               path="/message-details/:messageId"
               element={
                 isLoggedIn && hasUserProfile ? (
-                  <MessageDetail />
+                  isHidden ? null : (
+                    <MessageDetail onHideFooter={handleHideFooter} />
+                  )
                 ) : (
                   <Navigate to="/login" replace />
                 )
@@ -145,8 +152,8 @@ export default function App() {
               }
             />
           </Routes>
-          </UserProfileContext.Provider>
-        {isLoggedIn && hasUserProfile && <Footer />}
+        </UserProfileContext.Provider>
+        {isLoggedIn && hasUserProfile && !isHidden && <Footer />}
       </div>
     </Router>
   );

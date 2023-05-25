@@ -19,9 +19,15 @@ const Message = () => {
 
         const matchedUserPromises = likesSnapshot.docs.map(async (doc) => {
           const targetUserId = doc.data().likedUid;
-          const targetUserSnapshot = await db.collection("users").doc(targetUserId).get();
+          const targetUserSnapshot = await db
+            .collection("users")
+            .doc(targetUserId)
+            .get();
           const matchId = doc.data().matchId;
-          const messagesSnapshot = await db.collection("messages").doc(matchId).get();
+          const messagesSnapshot = await db
+            .collection("messages")
+            .doc(matchId)
+            .get();
           const messages = messagesSnapshot.data()?.messages || [];
           const lastMessage = messages[messages.length - 1] || {};
           return {
@@ -29,7 +35,8 @@ const Message = () => {
             id: targetUserId,
             matchId,
             lastMessage: lastMessage.content || "",
-            lastMessageDate: lastMessage.timestamp?.toDate().toLocaleString() || "",
+            lastMessageDate:
+              lastMessage.timestamp?.toDate().toLocaleString() || "",
           };
         });
 
@@ -45,14 +52,13 @@ const Message = () => {
   };
 
   return (
-    <div>
-      <h1>Messages</h1>
-      <ul className="menu bg-base-100 w-56">
+    <div className="bg-base-100">
+      <ul className="divide-y divide-gray-200">
         {matchedUsers.map((matchedUser) => (
           <li
             key={matchedUser.id}
             onClick={() => handleUserClick(matchedUser.matchId)}
-            className="py-2"
+            className="flex items-center px-4 py-2"
           >
             <button className="flex items-center w-full text-left">
               <img
@@ -62,8 +68,12 @@ const Message = () => {
               />
               <div>
                 <p className="font-bold">{matchedUser.name}</p>
-                <p className="text-sm">{matchedUser.lastMessage}</p>
-                <p className="text-xs">{matchedUser.lastMessageDate}</p>
+                <p className="text-sm text-gray-500">
+                  {matchedUser.lastMessage}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {matchedUser.lastMessageDate}
+                </p>
               </div>
             </button>
           </li>
@@ -71,8 +81,6 @@ const Message = () => {
       </ul>
     </div>
   );
-  
-  
 };
 
 export default Message;
