@@ -5,6 +5,7 @@ import UserCard from "../../components/UserCard";
 import UserDetails from "../../components/UserDetails";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
+import TinderCard from 'react-tinder-card'
 
 const Home = () => {
   const [users, setUsers] = useState([]);
@@ -39,6 +40,15 @@ const Home = () => {
     };
     fetchData();
   }, [user]);
+
+  const onSwipe = (direction) => {
+    // directionは'left', 'right', 'up', 'down'のいずれか
+    if (direction === 'right') { // 右にスワイプ
+      handleButtonClick(true);
+    } else if (direction === 'left') { // 左にスワイプ
+      handleButtonClick(false);
+    }
+  }
 
   const handleButtonClick = async (isYes) => {
     if (remainingUsers.length === 0) {
@@ -107,9 +117,11 @@ const Home = () => {
       setLikedUsers([...likedUsers, targetUser.id]);
     }
 
-    const nextIndex = (currentIndex + 1) % remainingUsers.length;
-    setCurrentIndex(nextIndex);
-    setShowDetails(false);
+    setTimeout(() => {
+      const nextIndex = (currentIndex + 1) % remainingUsers.length;
+      setCurrentIndex(nextIndex);
+      setShowDetails(false);
+    }, 0);
   };
 
   const handleCardClick = () => {
@@ -124,7 +136,6 @@ const Home = () => {
 
   return (
     <div>
-      <h1>Home</h1>
       <div className="h-screen flex justify-center items-center mx-8 mb-20">
         {loading ? (
           <div className="loader">Loading...</div>
@@ -133,24 +144,30 @@ const Home = () => {
             {!showDetails && (
               <>
                 {remainingUsers[currentIndex] && (
-                  <UserCard
-                    user={remainingUsers[currentIndex]}
-                    onClick={handleCardClick}
-                    className="rounded"
-                  />
+                  <div className="flex flex-col items-center">
+                    <TinderCard onSwipe={onSwipe}>
+                      <UserCard
+                        user={remainingUsers[currentIndex]}
+                        onClick={handleCardClick}
+                        className="rounded mb-4"
+                      />
+                    </TinderCard>
+                    <div>
+                      <button
+                        className="btn btn-circle mr-2"
+                        onClick={() => handleButtonClick(false)}
+                      >
+                        x
+                      </button>
+                      <button
+                        className="btn gap-2 w-10 h-10"
+                        onClick={() => handleButtonClick(true)}
+                      >
+                        ❤︎
+                      </button>
+                    </div>
+                  </div>
                 )}
-                <button
-                  className="btn btn-circle"
-                  onClick={() => handleButtonClick(false)}
-                >
-                  x
-                </button>
-                <button
-                  className="btn gap-2 w-10 h-10"
-                  onClick={() => handleButtonClick(true)}
-                >
-                  ❤︎
-                </button>
               </>
             )}
             {showDetails && (

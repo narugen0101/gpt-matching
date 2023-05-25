@@ -1,13 +1,26 @@
 import React from "react";
 
-const UserCard = ({ user, onClick }) => {
+export const calculateAge = (birthdate) => {
+  const today = new Date();
+  const birthDate = new Date(birthdate);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
+const UserCard = ({ user, onClick, className }) => {
+  const age = calculateAge(user.birthdate);
   return (
-    <div className="card w-3/10 bg-primary text-primary-content" onClick={onClick}>
-      <div className="card-body w-3/10">
-        <img src={user.photo1} alt="Profile" className="w-full max-w-card-img max-h-card-img" />
+    <div className={`card card-compact w-96 bg-base-100 shadow-xl ${className}`} onClick={onClick}>
+      <figure className="h-48 overflow-hidden">
+        <img src={user.photo1} alt="User" className="w-full h-full object-cover" />
+      </figure>
+      <div className="card-body">
         <h2 className="card-title">{user.name}</h2>
-        <p>{user.age} years old</p>
-        <div className="card-actions justify-end"></div>
+        <p>{age}歳</p>
       </div>
     </div>
   );

@@ -1,0 +1,37 @@
+      {messages.map((message, index, array) => (
+          <React.Fragment key={index}>
+            {index === 0 ||
+            !isSameDay(message.timestamp, array[index - 1].timestamp) ? (
+              <div className="badge badge-outline my-2 text-center w-full">
+                {message.dateStr}
+              </div>
+            ) : null}
+            <div
+              className={`chat ${
+                message.sender === user.uid ? "chat-end" : "chat-start"
+              }`}
+            >
+              <div className="chat-image">
+                <div className="w-10 h-10 rounded-full overflow-hidden">
+                  <img
+                    src={message.photoURL}
+                    alt="profile"
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+              </div>
+              <div className="chat-header">
+                {message.displayName}
+                <time className="text-xs opacity-50 ml-2">
+                  {format(message.timestamp, "HH:mm")}
+                </time>
+              </div>
+              <div className="chat-bubble">{message.content}</div>
+              <div className="chat-footer opacity-50">
+                {message.sender === user.uid && message.seen
+                  ? `Seen at ${format(message.seenAt, "HH:mm")}`
+                  : ""}
+              </div>
+            </div>
+          </React.Fragment>
+        ))}
