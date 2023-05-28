@@ -5,7 +5,7 @@ import UserCard from "../../components/UserCard";
 import UserDetails from "../../components/UserDetails";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
-import TinderCard from 'react-tinder-card'
+import TinderCard from "react-tinder-card";
 
 const Home = () => {
   const [users, setUsers] = useState([]);
@@ -15,17 +15,32 @@ const Home = () => {
   const [likedUsers, setLikedUsers] = useState([]);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [gender, setGender] = useState(null);
+
+  useEffect(() => {
+    const fetchUserGender = async () => {
+      if (user) {
+        const userRef = db.collection('users').doc(user.uid);
+        const userDoc = await userRef.get();
+        if (userDoc.exists) {
+          setGender(userDoc.data().gender);
+        }
+      }
+    };
+    fetchUserGender();
+  }, [user]);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (user) {
+      if (user && gender) {
         const usersSnapshot = await db.collection("users").get();
         const usersData = usersSnapshot.docs
           .map((doc) => ({
             ...doc.data(),
             id: doc.id,
           }))
-          .filter((u) => u.id !== user.uid);
+          .filter((u) => u.id !== user.uid && u.gender !== gender) // Modify this line
+          .sort(() => Math.random() - 0.5);
         setUsers(usersData);
         const likesSnapshot = await db
           .collection("likes")
@@ -39,21 +54,25 @@ const Home = () => {
       }
     };
     fetchData();
-  }, [user]);
+  }, [user, gender]);
+
 
   const onSwipe = (direction) => {
     // directionは'left', 'right', 'up', 'down'のいずれか
-    if (direction === 'right') { // 右にスワイプ
+    if (direction === "right") {
+      // 右にスワイプ
       handleButtonClick(true);
-    } else if (direction === 'left') { // 左にスワイプ
+    } else if (direction === "left") {
+      // 左にスワイプ
       handleButtonClick(false);
     }
-  }
+  };
 
   const handleButtonClick = async (isYes) => {
     if (remainingUsers.length === 0) {
       return;
     }
+    const targetUser = remainingUsers[currentIndex];
     if (isYes) {
       const targetUser = remainingUsers[currentIndex];
       let currentUserLikes = await db
@@ -115,7 +134,22 @@ const Home = () => {
       }
 
       setLikedUsers([...likedUsers, targetUser.id]);
-    }
+    } else {
+      // 「X」ボタンが押されたときのロジック
+      // 「いいえ」としたユーザーをdislikesコレクションに追加
+      const currentUserDislikes = await db
+        .collection("dislikes")
+        .where("uid", "==", user.uid)
+        .where("dislikedUid", "==", targetUser.id)
+        .get();
+        
+      if (currentUserDislikes.empty) {
+        await db.collection("dislikes").add({
+          uid: user.uid,
+          dislikedUid: targetUser.id,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+      }}
 
     setTimeout(() => {
       const nextIndex = (currentIndex + 1) % remainingUsers.length;
@@ -135,8 +169,8 @@ const Home = () => {
   const remainingUsers = users.filter((u) => !likedUsers.includes(u.id));
 
   return (
-    <div>
-      <div className="h-screen flex justify-center items-center mx-8 mb-20">
+    <div style={{overflowY: "hidden"}}>
+      <div className="h-screen flex justify-center items-center mx-8">
         {loading ? (
           <div className="loader">Loading...</div>
         ) : remainingUsers.length > 0 ? (
@@ -185,6 +219,7 @@ const Home = () => {
       </div>
     </div>
   );
+  
 };
 
 export default Home;

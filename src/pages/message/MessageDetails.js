@@ -12,6 +12,7 @@ const MessageDetail = () => {
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
+  const [otherUserName, setOtherUserName] = React.useState("");
 
   useEffect(() => {
     const fetchSenderInfo = async (message) => {
@@ -91,15 +92,27 @@ const MessageDetail = () => {
   };
   
 
-  const getOtherUserDisplayName = () => {
-    if (messages.length > 0) {
-      const otherUser = messages.find((message) => message.sender !== user.uid);
-      if (otherUser) {
-        return otherUser.displayName;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const getOtherUserDisplayName = async () => {
+      const docSnapshot = await db.collection("messages").doc(messageId).get();
+      const users = docSnapshot.data().users;
+      const otherUserId = users.find(userId => userId !== user.uid);
+      if (otherUserId) {
+        const otherUserSnapshot = await db.collection("users").doc(otherUserId).get();
+        const otherUserData = otherUserSnapshot.data();
+        if (otherUserData) {
+          return otherUserData.name;
+        }
       }
-    }
-    return "";
-  };
+      return "";
+    };
+  
+    getOtherUserDisplayName().then(name => {
+      setOtherUserName(name);
+    });
+  }, [messageId, user]);
 
   const handleGoBack = () => {
     navigate(-1);
@@ -115,7 +128,7 @@ const MessageDetail = () => {
           />
         </div>
         <div className="flex justify-center w-full">
-          <h3 className="text-xl text-white">{getOtherUserDisplayName()}</h3>
+          <h3 className="text-xl text-white">{otherUserName}</h3>
         </div>
         <div className="w-10"></div>
       </div>
