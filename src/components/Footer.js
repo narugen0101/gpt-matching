@@ -1,14 +1,14 @@
 import React from "react";
-import { useNavigate} from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FaHome, FaEnvelope } from "react-icons/fa";
 import { AiFillProfile } from "react-icons/ai";
 import "../Footer.css";
 
 const Footer = () => {
   const navigate = useNavigate();
-  const location = window.location.pathname;
+  const location = useLocation();
 
-  const isMessageDetailPage = location.includes("/message-details/");
+  const isMessageDetailPage = location.pathname.includes("/message-details/");
 
   const ClickHome = () => {
     navigate(`/home`);
@@ -18,16 +18,20 @@ const Footer = () => {
   };
   const ClickMyPage = () => {
     navigate(`/mypage`);
-};
+  };
 
-return (
+  return (
     !isMessageDetailPage && (
-      <div className="footer">
-        <div className="footer-container">
-          <FaHome className="footer-icon" onClick={ClickHome} />
-          <FaEnvelope className="footer-icon" onClick={ClickMessage} />
-          <AiFillProfile className="footer-icon" alt="mypage" onClick={ClickMyPage} />
-        </div>
+      <div className="btm-nav">
+        <button onClick={ClickHome} className={`text-primary ${location.pathname === '/home' ? 'active' : ''}`}>
+          <FaHome className="h-5 w-5" />
+        </button>
+        <button onClick={ClickMessage} className={`text-primary ${location.pathname === '/message' ? 'active' : ''}`}>
+          <FaEnvelope className="h-5 w-5" />
+        </button>
+        <button onClick={ClickMyPage} className={`text-primary ${(location.pathname === '/mypage' || location.pathname === '/userprofile') ? 'active' : ''}`}>
+          <AiFillProfile className="h-5 w-5" />
+        </button>
       </div>
     )
   );
