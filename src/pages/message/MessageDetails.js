@@ -4,6 +4,9 @@ import { db, auth } from "../../firebaseConfig";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { format, isSameDay } from "date-fns";
 import { FaChevronLeft } from "react-icons/fa";
+import axios from "axios";
+import { formatMessages } from "../../utils/formatMessages";
+import { insertDynamicPartsIntoPrompt } from "../../utils/insertDynamicPartsIntoPrompt"
 
 const MessageDetail = () => {
   const { messageId } = useParams();
@@ -131,14 +134,46 @@ const MessageDetail = () => {
     }
   };
 
-  const creatAiText = () => {
+  const createAiText = async () => {
     setloading(true);
-
-    setTimeout(() => {
-      setloading(false);
-      setFocused(false);
-    }, 2000); // 2000 milliseconds = 2 seconds
+    const serverEndpoint = "https://api.openai.com/v1/chat/completions";
+  
+    // Fetch the prompt template from Firebase Firestore
+    const promptDoc = await db.collection('prompts').doc('1Pr8ZQIaoWtRshr9l4uE').get();
+    const promptTemplate = promptDoc.data().content;  // Adjusted field name here
+  
+    const formattedMessages = formatMessages(messages, user.uid);
+    console.log(`fomatted:¥n${formattedMessages}`);
+  
+    // Prepare the actual prompt by inserting formattedText and newMessage into the template
+    const prompt = insertDynamicPartsIntoPrompt(promptTemplate, formattedMessages, newMessage);
+  
+    console.log(prompt);
+  
+    try {
+      const response = await axios.post(
+        serverEndpoint,
+        {
+          model: "gpt-3.5-turbo",
+          messages: [{ role: "user", content: prompt }],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.REACT_APP_OPEN_AI_API_KEY}`,
+          },
+        }
+      );
+  
+      const aiMessage = JSON.parse(response.data.choices[0].message.content);
+      console.log(aiMessage)
+      setNewMessage(aiMessage.output);
+    } catch (error) {
+      console.error(error);
+    }
+  
+    setloading(false);
   };
+  
 
   return (
     <div className="flex flex-col h-screen">
@@ -206,7 +241,7 @@ const MessageDetail = () => {
               <button className="btn">
                 <svg
                   aria-hidden="true"
-                  class="inline w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-pink-600"
+                  className="inline w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-pink-600"
                   viewBox="0 0 100 101"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
@@ -226,7 +261,11 @@ const MessageDetail = () => {
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => creatAiText()}
+                onClick={async (event) => {
+                  // async event handler
+                  event.preventDefault(); // prevent the default form submission
+                  await createAiText(); // call the creatAiText function
+                }}
               >
                 Aiで作成✨
               </button>
