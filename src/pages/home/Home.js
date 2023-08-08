@@ -5,7 +5,6 @@ import UserCard from "../../components/UserCard";
 import UserDetails from "../../components/UserDetails";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
-import TinderCard from "react-tinder-card";
 
 const Home = () => {
   const [users, setUsers] = useState([]);
@@ -57,18 +56,12 @@ const Home = () => {
   }, [user, gender]);
 
 
-  const onSwipe = (direction) => {
-    // directionは'left', 'right', 'up', 'down'のいずれか
-    if (direction === "right") {
-      // 右にスワイプ
-      handleButtonClick(true);
-    } else if (direction === "left") {
-      // 左にスワイプ
-      handleButtonClick(false);
-    }
-  };
+  
+  
+
 
   const handleButtonClick = async (isYes) => {
+    console.log('handleButtonClickが起動しました')
     if (remainingUsers.length === 0) {
       return;
     }
@@ -151,11 +144,12 @@ const Home = () => {
         });
       }}
 
-    setTimeout(() => {
-      const nextIndex = (currentIndex + 1) % remainingUsers.length;
-      setCurrentIndex(nextIndex);
-      setShowDetails(false);
-    }, 0);
+      setTimeout(() => {
+        const nextIndex = (currentIndex + 1) % remainingUsers.length;
+        setCurrentIndex(nextIndex);
+        setShowDetails(false);
+        console.log("handlebuttonSubmitが終了")
+      }, 0);
   };
 
   const handleCardClick = () => {
@@ -179,13 +173,13 @@ const Home = () => {
               <>
                 {remainingUsers[currentIndex] && (
                   <div className="flex flex-col items-center">
-                    <TinderCard onSwipe={onSwipe}>
+                    
                       <UserCard
                         user={remainingUsers[currentIndex]}
                         onClick={handleCardClick}
                         className="rounded mb-4"
                       />
-                    </TinderCard>
+                    
                     <div>
                       <button
                         className="btn btn-circle mr-2"
